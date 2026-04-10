@@ -34,7 +34,7 @@ Monitoring Stack:
 ### 1. Clone & configure
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/supachat.git
+git clone https://github.com/Shaikarif143/Devops_fullstack_developer_task_SupaChat.git
 cd supachat
 cp .env.example .env
 # Edit .env with your Supabase + Anthropic API keys

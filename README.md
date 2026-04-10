@@ -1,8 +1,8 @@
 # SupaChat — Conversational Analytics
 
-> Ask your blog analytics database anything in plain English. Powered by Claude AI + Supabase + DevOps-grade infrastructure.
+> Ask your blog analytics database anything in plain English. Powered by **Groq AI (Llama 3.3)** + Supabase + DevOps-grade infrastructure.
 
-![SupaChat Architecture](https://via.placeholder.com/800x400?text=SupaChat+Architecture)
+🔗 **GitHub:** https://github.com/Shaikarif143/Devops_fullstack_developer_task_SupaChat
 
 ---
 
@@ -16,7 +16,7 @@ User Browser
     ├── /        → Frontend (React + Recharts) :3000
     └── /api     → Backend (FastAPI) :8000
                         │
-                        ├── Claude AI (NL → SQL)
+                        ├── Groq AI llama-3.3-70b (NL → SQL)
                         └── Supabase PostgreSQL
 
 Monitoring Stack:
@@ -34,10 +34,10 @@ Monitoring Stack:
 ### 1. Clone & configure
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/supachat.git
-cd supachat
+git clone https://github.com/Shaikarif143/Devops_fullstack_developer_task_SupaChat.git
+cd Devops_fullstack_developer_task_SupaChat
 cp .env.example .env
-# Edit .env with your Supabase + Anthropic API keys
+# Edit .env with your keys
 ```
 
 ### 2. Set up Supabase
@@ -46,31 +46,50 @@ cp .env.example .env
 2. Open **SQL Editor** → paste contents of `backend/seed.sql` → Run
 3. Copy your **Project URL** and **anon key** into `.env`
 
-### 3. Run locally with Docker
+### 3. Configure .env
+
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=eyJhbGci...your-anon-key...
+GROQ_API_KEY=gsk_your-groq-key-here
+APP_ENV=development
+```
+
+> 🔑 Get free Groq API key at [console.groq.com](https://console.groq.com) — no credit card needed
+
+### 4. Run locally with Docker
 
 ```bash
 docker-compose up -d
 ```
 
-| Service    | URL                        |
-|------------|----------------------------|
-| App        | http://localhost           |
-| Backend    | http://localhost:8000      |
-| Prometheus | http://localhost:9090      |
-| Grafana    | http://localhost:3001      |
-| Loki       | http://localhost:3100      |
+| Service    | URL                   | Credentials       |
+|------------|-----------------------|-------------------|
+| App        | http://localhost      | —                 |
+| Backend    | http://localhost:8000 | —                 |
+| API Docs   | http://localhost:8000/docs | —            |
+| Prometheus | http://localhost:9090 | —                 |
+| Grafana    | http://localhost:3001 | admin / admin123  |
+| Loki       | http://localhost:3100 | —                 |
 
 ---
 
 ## 🚀 Deploy to AWS EC2
 
-### 1. Launch EC2
+### 1. Launch EC2 Instance
 
-- AMI: Ubuntu 22.04 LTS
-- Instance: t2.micro (free tier) or t2.small
-- Security Group — open ports: 22, 80, 3001, 9090
+- AMI: **Ubuntu 22.04 LTS**
+- Instance type: **t2.micro** (free tier eligible)
+- Security Group — open inbound ports:
 
-### 2. First-time setup
+| Port | Purpose       |
+|------|---------------|
+| 22   | SSH           |
+| 80   | App (HTTP)    |
+| 3001 | Grafana       |
+| 9090 | Prometheus    |
+
+### 2. First-time setup on EC2
 
 ```bash
 ssh -i your-key.pem ubuntu@YOUR_EC2_IP
@@ -85,7 +104,7 @@ nano .env          # Add your real API keys
 docker-compose up -d
 ```
 
-Your app is live at `http://YOUR_EC2_IP`
+✅ Your app is live at `http://YOUR_EC2_IP`
 
 ---
 
@@ -93,24 +112,24 @@ Your app is live at `http://YOUR_EC2_IP`
 
 ### Setup Secrets
 
-In your GitHub repo → Settings → Secrets → Actions, add:
+Go to GitHub repo → **Settings → Secrets → Actions** → add:
 
-| Secret | Value |
-|--------|-------|
-| `EC2_HOST` | Your EC2 public IP |
-| `EC2_SSH_KEY` | Contents of your `.pem` file |
+| Secret Name  | Value                          |
+|--------------|--------------------------------|
+| `EC2_HOST`   | Your EC2 public IP address     |
+| `EC2_SSH_KEY`| Full contents of your .pem file|
 
 ### Pipeline Flow
 
 ```
 Push to main
     │
-    ├── Test (Python lint + React build)
-    ├── Build Docker images → push to GHCR
-    └── Deploy to EC2 (zero-downtime rolling restart)
+    ├── 1. Test  — Python lint + React build
+    ├── 2. Build — Docker images → push to GHCR
+    └── 3. Deploy → EC2 zero-downtime rolling restart
 ```
 
-Every push to `main` auto-deploys within ~3 minutes.
+Every push to `main` auto-deploys in ~3 minutes. ✅
 
 ---
 
@@ -118,25 +137,27 @@ Every push to `main` auto-deploys within ~3 minutes.
 
 ### Grafana Setup
 
-1. Open http://YOUR_IP:3001
+1. Open `http://YOUR_IP:3001`
 2. Login: `admin` / `admin123`
-3. Import dashboard ID **1860** (Node Exporter Full) for system metrics
-4. Import dashboard ID **14282** for Docker container metrics
-5. Connect Loki datasource for logs
+3. Import dashboard **ID: 1860** → Node Exporter Full (CPU/memory/disk)
+4. Import dashboard **ID: 14282** → Docker container metrics
+5. Connect **Loki** datasource for application logs
 
 ### What's Monitored
 
-- CPU & memory usage per container
-- HTTP request rate & latency (FastAPI /metrics)
-- Container health status
-- Application logs (via Loki)
-- Error logs with alerting
+| Metric | Tool |
+|--------|------|
+| CPU & memory per container | Prometheus + Grafana |
+| HTTP request rate & latency | FastAPI /metrics |
+| Container health status | Docker + Prometheus |
+| Application logs | Loki + Promtail |
+| Error logs | Loki query: `{container_name="supachat-backend"} \|= "ERROR"` |
 
 ---
 
 ## 🤖 DevOps Agent (Bonus)
 
-AI-powered operations assistant:
+AI-powered operations assistant using Groq AI:
 
 ```bash
 # Check system health
@@ -145,13 +166,13 @@ python devops_agent.py health
 # AI-summarized log analysis
 python devops_agent.py logs
 
-# Full system diagnosis with recommendations
+# Full system diagnosis with fix recommendations
 python devops_agent.py diagnose
 
 # Zero-downtime deploy with AI failure analysis
 python devops_agent.py deploy
 
-# Safe restart
+# Safe restart all containers
 python devops_agent.py restart
 ```
 
@@ -171,23 +192,23 @@ python devops_agent.py restart
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
+|-------|------------|
 | Frontend | React 18, Vite, Recharts |
 | Backend | FastAPI, Python 3.11 |
-| AI | Claude claude-sonnet-4-20250514 (NL→SQL) |
+| AI (NL→SQL) | Groq API — llama-3.3-70b-versatile (Free) |
 | Database | Supabase (PostgreSQL) |
 | Containers | Docker, Docker Compose |
-| Reverse Proxy | Nginx |
+| Reverse Proxy | Nginx (gzip + caching + websocket) |
 | CI/CD | GitHub Actions |
-| Monitoring | Prometheus, Grafana, Loki, Promtail |
-| Cloud | AWS EC2 |
+| Monitoring | Prometheus, Grafana, Loki, Promtail, Node Exporter |
+| Cloud | AWS EC2 (Ubuntu 22.04) |
 
 ---
 
 ## 🤖 AI Tools Used
 
-- **Claude (claude.ai)** — project scaffolding, code generation, debugging
-- **Claude Code** — terminal-based agentic coding
+- **Claude (claude.ai)** — project scaffolding, architecture design, code generation
+- **Groq API** — free LLM (llama-3.3-70b) for natural language to SQL conversion
 - **Cursor** — AI-assisted code editing
 
 ---
@@ -195,7 +216,7 @@ python devops_agent.py restart
 ## 📁 Project Structure
 
 ```
-supachat/
+Devops_fullstack_developer_task_SupaChat/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
@@ -207,7 +228,7 @@ supachat/
 │   ├── Dockerfile
 │   └── package.json
 ├── backend/
-│   ├── main.py                   # FastAPI + Claude NL→SQL
+│   ├── main.py                   # FastAPI + Groq NL→SQL
 │   ├── seed.sql                  # Supabase schema + sample data
 │   ├── requirements.txt
 │   └── Dockerfile
@@ -218,17 +239,21 @@ supachat/
 │   ├── loki/loki-config.yml
 │   ├── loki/promtail-config.yml
 │   └── grafana/provisioning/
-├── .github/workflows/deploy.yml  # CI/CD pipeline
+├── .github/
+│   └── workflows/deploy.yml      # CI/CD pipeline
 ├── devops_agent.py               # Bonus: AI DevOps agent
-├── docker-compose.yml
-├── setup-ec2.sh
-└── .env.example
+├── docker-compose.yml            # Full stack orchestration
+├── setup-ec2.sh                  # One-command EC2 setup
+└── .env.example                  # Environment template
 ```
 
 ---
 
 ## 👤 Author
 
-**Mahammad Arif Shaik**  
-AWS DevOps Engineer  
-[LinkedIn](https://www.linkedin.com/in/arif-awsengineer/) | [GitHub](https://github.com/Shaikarif143)
+**Mahammad Arif Shaik**
+AWS DevOps Engineer | Cloud Infrastructure | CI/CD | Kubernetes | Terraform
+
+📧 shaikmahammadarif98@gmail.com
+📱 +91 9490769794
+🔗 [LinkedIn](https://www.linkedin.com/in/arif-awsengineer/) | [GitHub](https://github.com/Shaikarif143)
